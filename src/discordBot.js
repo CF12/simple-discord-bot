@@ -1,13 +1,21 @@
 // Import requirements
 const fs = require('fs')
 const path = require('path')
+let Opus
 let Discord
 
 // Tries for discord.js install
 try {
   Discord = require('discord.js')
 } catch (err) {
-  console.log('ERROR: discord.js not found! Please make sure you use "npm install discord.js" before using the bot!')
+  throw new Error('ERROR: discord.js not found! Please make sure you use "npm install discord.js" before using the bot!')
+}
+
+// Tries for node-opus install
+try {
+  Opus = require('node-opus')
+} catch (err) {
+  throw new Error('ERROR: node-opus not found! Please make sure you use "npm install node-opus" before using the bot!')
 }
 
 // Init data.json
