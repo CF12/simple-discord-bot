@@ -48,3 +48,4 @@ jspm_packages
 
 # Custom dirs
 testing
+src/data.json

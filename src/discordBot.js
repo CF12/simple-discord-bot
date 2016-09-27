@@ -1,31 +1,19 @@
 // Import requirements
 const fs = require('fs')
 const path = require('path')
-let Opus
-let Discord
-
-// Tries for discord.js install
-try {
-  Discord = require('discord.js')
-} catch (err) {
-  throw new Error('ERROR: discord.js not found! Please make sure you use "npm install discord.js" before using the bot!')
-}
-
-// Tries for node-opus install
-try {
-  Opus = require('node-opus')
-} catch (err) {
-  throw new Error('ERROR: node-opus not found! Please make sure you use "npm install node-opus" before using the bot!')
-}
+// const Opus = require('node-opus')
+const Discord = require('discord.js')
 
 // Init data.json
 let data = JSON.parse(fs.readFileSync(path.join(__dirname + '/data.json')))
 
-// Set's up bot object
+// Sets up objects
 let bot = new Discord.Client()
+let voiceChannel = new Discord.VoiceChannel()
+// let encoder = new Opus.OpusEncoder()
 
 // Logs Bot in w/ token
-bot.login('MjI5NzYzMTAzMDQ5MzgzOTM2.Csn_FA.o5RT8CUQuL0NO2VlAQoey-RLxaw')
+bot.login(data.bot_token)
 
 // Random Number Function
 function randomNum (min, max) {
@@ -37,7 +25,7 @@ let pf = 'j!'
 
 // Error Handeling
 bot.on('error', (err) => {
-  bot.sendMessage('```ERROR: Unknown: See details:\n" + err + "```')
+  bot.sendMessage('```ERROR: Unknown: See details:\n' + err + '```')
   console.console.error(err)
 })
 
@@ -56,5 +44,17 @@ bot.on('ready', () => {
     if (message.content.startsWith(pf + 'status')) {
       message.channel.sendMessage('```> BOT STATUS < \n===============\n' + 'Bot created by CF12#1240\n' + 'Bot started: | ' + bot.readyTime + '\n' + 'Bot uptime:  | ' + bot.uptime + ' miliseconds' + '```')
     }
+
+    // John Cena Voice Command
+    if (message.content.startsWith(pf + 'jc')) {
+      voiceChannel.join().then(connection => {
+        connection.playFile('/john_cena.mp3')
+      })
+    }
+  })
+
+  // Voice disconnecter
+  streamDispatcher.on('end', () => {
+    voiceChannel.leave()
   })
 })
