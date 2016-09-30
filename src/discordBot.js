@@ -27,10 +27,31 @@ bot.on('error', (err) => {
   console.console.error(err)
 })
 
-// Voice Function
-function voice (channel) {
-  let voiceChannel = channel
-  return voiceChannel.join()
+// Voice Variables
+var inVoice = false
+var voiceChannel = 0
+
+// Voice Connect Function
+function voiceConnect (channel) {
+  try {
+    voiceChannel = channel
+    inVoice = true
+    return voiceChannel.join()
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+// Voice Disconnect Function
+function voiceDisconnect (channel) {
+  try {
+    voiceChannel = channel
+    inVoice = false
+    console.log('Disconnected from channel')
+    return voiceChannel.leave()
+  } catch (err) {
+    console.log(err)
+  }
 }
 
 // Bot initiates after it's ready
@@ -54,38 +75,46 @@ bot.on('ready', () => {
 
     // John Cena Voice Command
     if (message.content.startsWith(pf + 'jc')) {
-      voice(voiceChannel)
-      .then(connection => {
-        console.log('Connected to channel: ' + connection.channel)
-        let dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
-        dispatcher
-        dispatcher.on('end', () => {
-          voiceChannel.leave()
+      if (inVoice === false) {
+        voiceConnect(voiceChannel)
+        .then(connection => {
+          console.log('Connected to channel: ' + connection.channel)
+          let dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
+          dispatcher
+          dispatcher.on('end', () => {
+            voiceDisconnect(voiceChannel)
+          })
         })
-      })
-      .catch(console.log)
+        .catch(console.log)
+      } else {
+        message.channel.sendMessage('**ERROR: Already in a voice channel!**')
+      }
     }
 
     // Play from youtube
     if (message.content.startsWith(pf + 'play')) {
       let url = message.content.slice(pf.length + 6, message.content.len)
-      voice(voiceChannel)
-        .then(connection => {
-          const stream = ytdl(url, {filter: 'audioonly'})
-          const dispatcher = connection.playStream(stream)
-          dispatcher
-          dispatcher.on('end', () => {
-            voiceChannel.leave()
+      if (inVoice === false) {
+        voiceConnect(voiceChannel)
+          .then(connection => {
+            const stream = ytdl(url, {filter: 'audioonly'})
+            const dispatcher = connection.playStream(stream)
+            dispatcher
+            dispatcher.on('end', () => {
+              voiceDisconnect(voiceChannel)
+            })
           })
-        })
-        .catch(console.log)
+          .catch(console.log)
+      } else {
+        message.channel.sendMessage('**ERROR: Already in a voice channel!**')
+      }
     }
 
     // Volume Adjustment
     if (message.content.startsWith(pf + 'volume')) {
       let volume = message.content.slice(pf.length + 7, message.content.length)
       console.log(volume)
-      voice(voiceChannel)
+      voiceConnect(voiceChannel)
         .then(connection => {
           const dispatcher = connection.dispatcher
           dispatcher.setVolume(2)
@@ -96,7 +125,20 @@ bot.on('ready', () => {
 
     // Leave Voice Command
     if (message.content.startsWith(pf + 'leave')) {
-      voiceChannel.leave()
+      if (inVoice === true) {
+        voiceDisconnect(voiceChannel)
+        message.channel.sendMessage('**INFO: Disconnected from voice channel**')
+      } else {
+        message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
+      }
     }
   })
+})
+
+bot.on('disconnect', () => {
+  try {
+    voiceDisconnect(voiceChannel)
+  } catch (err) {
+    console.log(err)
+  }
 })
