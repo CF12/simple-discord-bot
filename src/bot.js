@@ -19,17 +19,18 @@ function randomNum (min, max) {
 }
 
 // Variables
-let pf = 'j!'
+let pf = '$'
 
 // Error Handeling
 bot.on('error', (err) => {
   bot.sendMessage('```ERROR: Unknown: See details:\n' + err + '```')
-  console.console.error(err)
+  console.log(err)
+  throw (err)
 })
 
 // Voice Variables
 var inVoice = false
-var voiceChannel = 0
+var voiceChannel = null
 
 // Voice Connect Function
 function voiceConnect (channel) {
@@ -54,15 +55,25 @@ function voiceDisconnect (channel) {
   }
 }
 
+// Convert Duration Function
+function convertDuration (time) {
+  time = time * 1000
+  var minutes = Math.floor(time / 60000)
+  var hours = Math.floor(minutes / 60)
+  var seconds = Math.floor(((time) - (minutes * 60000)) / 1000)
+  minutes -= hours * 60
+  if (minutes < 10 && hours > 0) minutes = ':' + minutes
+  if (seconds < 10) seconds = '0' + seconds
+  if (hours > 0) return hours + ':' + minutes + ':' + seconds
+  else return minutes + ':' + seconds
+}
+
 // Bot initiates after it's ready
 bot.on('ready', () => {
   console.log('Bot is ready!')
 
   // On message detected event
   bot.on('message', (message) => {
-    // Sets voice channel to channel in which user initiated it
-    let voiceChannel = message.member.voiceChannel
-
     // "Michael" string detected
     if (message.content.startsWith(pf + 'michael')) {
       message.channel.sendMessage(data.replies_michael[randomNum(0, data.replies_michael.length)])
@@ -76,10 +87,32 @@ bot.on('ready', () => {
     // John Cena Voice Command
     if (message.content.startsWith(pf + 'jc')) {
       if (inVoice === false) {
+        let voiceChannel = message.member.voiceChannel
         voiceConnect(voiceChannel)
         .then(connection => {
           console.log('Connected to channel: ' + connection.channel)
-          let dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
+          const dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
+          dispatcher.setVolume(0.1)
+          dispatcher
+          dispatcher.on('end', () => {
+            voiceDisconnect(voiceChannel)
+          })
+        })
+        .catch(console.log)
+      } else {
+        message.channel.sendMessage('**ERROR: Already in a voice channel!**')
+      }
+    }
+
+    // Rick Roll Command
+    if (message.content.startsWith(pf + 'rr')) {
+      if (inVoice === false) {
+        let voiceChannel = message.member.voiceChannel
+        voiceConnect(voiceChannel)
+        .then(connection => {
+          console.log('Connected to channel: ' + connection.channel)
+          const dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
+          dispatcher.setVolume(0.3)
           dispatcher
           dispatcher.on('end', () => {
             voiceDisconnect(voiceChannel)
@@ -93,13 +126,21 @@ bot.on('ready', () => {
 
     // Play from youtube
     if (message.content.startsWith(pf + 'play')) {
-      let url = message.content.slice(pf.length + 6, message.content.len)
+      let url = message.content.split(' ')
       if (inVoice === false) {
+        let voiceChannel = message.member.voiceChannel
         voiceConnect(voiceChannel)
           .then(connection => {
-            const stream = ytdl(url, {filter: 'audioonly'})
+            message.channel.sendMessage('**INFO: ** Grabbing video data...')
+            const stream = ytdl(url[1], {filter: 'audioonly'})
             const dispatcher = connection.playStream(stream)
-            dispatcher
+            ytdl.getInfo(url[1], (err, info) => {
+              message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
+              console.log('Connected to channel: ' + connection.channel)
+              console.log('Playing YouTube audio: ' + url[1])
+              dispatcher
+              if (err) console.log(err)
+            })
             dispatcher.on('end', () => {
               voiceDisconnect(voiceChannel)
             })
@@ -133,12 +174,4 @@ bot.on('ready', () => {
       }
     }
   })
-})
-
-bot.on('disconnect', () => {
-  try {
-    voiceDisconnect(voiceChannel)
-  } catch (err) {
-    console.log(err)
-  }
 })

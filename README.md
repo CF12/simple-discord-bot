@@ -4,4 +4,4 @@ This is a simple discord bot that can't do very much right now.
 **Current Dependencies:**
 - Node.js
 - Discord.js
-- Node-Opus
+- YouTube DL for node.js

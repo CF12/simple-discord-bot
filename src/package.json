@@ -1,0 +1,25 @@
+{
+  "name": "simple-discord-bot",
+  "version": "1.0.0",
+  "description": "A simple discord bot that carries out basic functions.",
+  "main": "src/bot.js",
+  "dependencies": {
+    "fs": "^0.0.2",
+    "path": "^0.12.7",
+    "ytdl": "^0.3.14",
+    "discord.js": "^9.3.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CF12/simple-discord-bot.git"
+  },
+  "author": "CF12",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CF12/simple-discord-bot/issues"
+  },
+  "homepage": "https://github.com/CF12/simple-discord-bot#readme"
+}
