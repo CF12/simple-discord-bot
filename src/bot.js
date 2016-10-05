@@ -4,14 +4,15 @@ const path = require('path')
 const ytdl = require('ytdl-core')
 const Discord = require('discord.js')
 
-// Init data.json
+// Convert JSONs to JS objects
 let data = JSON.parse(fs.readFileSync(path.join(__dirname + '/data.json')))
+let config = JSON.parse(fs.readFileSync(path.join(__dirname + '/config.json')))
 
 // Sets up objects
 let bot = new Discord.Client()
 
 // Logs Bot in w/ token
-bot.login(data.bot_token)
+bot.login(config.bot_token)
 
 // Random Number Function
 function randomNum (min, max) {
@@ -155,7 +156,7 @@ bot.on('ready', () => {
     if (message.content.startsWith(pf + 'volume')) {
       let volume = message.content.split(' ')
       data.volume = volume[1]
-      console.log(data.volume)
+      fs.writeFileSync(path.join(__dirname + '/data.json'), JSON.stringify(data))
     }
 
     // Leave Voice Command

@@ -4,10 +4,10 @@
   "description": "A simple discord bot that carries out basic functions.",
   "main": "src/bot.js",
   "dependencies": {
+    "discord.js": "^9.3.0",
     "fs": "^0.0.2",
     "path": "^0.12.7",
-    "ytdl": "^0.3.14",
-    "discord.js": "^9.3.0"
+    "ytdl": "^0.3.14"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
