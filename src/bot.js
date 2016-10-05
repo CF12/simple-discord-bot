@@ -153,15 +153,9 @@ bot.on('ready', () => {
 
     // Volume Adjustment
     if (message.content.startsWith(pf + 'volume')) {
-      let volume = message.content.slice(pf.length + 7, message.content.length)
-      console.log(volume)
-      voiceConnect(voiceChannel)
-        .then(connection => {
-          const dispatcher = connection.dispatcher
-          dispatcher.setVolume(2)
-          message.channel.sendMessage('**Volume set to:** ' + volume)
-        })
-        .catch(console.log)
+      let volume = message.content.split(' ')
+      data.volume = volume[1]
+      console.log(data.volume)
     }
 
     // Leave Voice Command
