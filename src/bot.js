@@ -11,9 +11,6 @@ let config = JSON.parse(fs.readFileSync(path.join(__dirname + '/config.json')))
 // Sets up objects
 let bot = new Discord.Client()
 
-// Logs Bot in w/ token
-bot.login(config.bot_token)
-
 // Random Number Function
 function randomNum (min, max) {
   return Math.floor(Math.random() * (max - min) + min)
@@ -21,17 +18,9 @@ function randomNum (min, max) {
 
 // Variables
 let pf = '$'
-
-// Error Handeling
-bot.on('error', (err) => {
-  bot.sendMessage('```ERROR: Unknown: See details:\n' + err + '```')
-  console.log(err)
-  throw (err)
-})
-
-// Voice Variables
 var inVoice = false
 var voiceChannel = null
+var voiceCommandFirstInstance = true
 
 // Voice Connect Function
 function voiceConnect (channel) {
@@ -138,6 +127,8 @@ bot.on('ready', () => {
     // Play from youtube
     if (message.content.startsWith(pf + 'play')) {
       let url = message.content.split(' ')
+      voiceCommandFirstInstance = false
+
       if (inVoice === false) {
         let voiceChannel = message.member.voiceChannel
 
@@ -165,11 +156,13 @@ bot.on('ready', () => {
                     console.log('Volume was set to: ' + volume)
                     message.channel.sendMessage(volumeResult[1])
                   } else if (inVoice === false) {
+                    console.log('Invalid Volume Command: Bot was not in voice channel')
                     message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
                   } else {
                     console.log('Invalid Volume Input! Volume was not changed.')
                     message.channel.sendMessage(volumeResult[1])
                   }
+
                   if (err) console.log(err)
                 }
               })
@@ -195,6 +188,12 @@ bot.on('ready', () => {
       }
     }
 
+    // Voice Handler that handles voice before music has been played
+    if (message.content.startsWith(pf + 'volume') && voiceCommandFirstInstance === true) {
+      console.log('Invalid Volume Command: Bot was not in voice channel')
+      message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
+    }
+
     // Destroy bot
     if (message.content.startsWith(pf + 'destroy')) {
       console.log('Shutting down bot...')
@@ -206,3 +205,13 @@ bot.on('ready', () => {
     }
   })
 })
+
+// Error Handeling
+bot.on('error', (err) => {
+  bot.sendMessage('```ERROR: Unknown: See details:\n' + err + '```')
+  console.log(err)
+  throw (err)
+})
+
+// Logs Bot in w/ token
+bot.login(config.bot_token)
