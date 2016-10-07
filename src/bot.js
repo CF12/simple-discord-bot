@@ -56,6 +56,16 @@ function voiceDisconnect (channel) {
   }
 }
 
+// Volume Control Handler
+function volumeHandler (volume) {
+  if (volume % 1 === 0 && volume >= 0 && volume <= 20) {
+    let output = Math.floor((volume - 20) * 1.2)
+    return [output, '**INFO: **Volume was set to: ' + volume]
+  } else {
+    return [false, '**ERROR: **Invalid amount! Must be an integer between 0 and 20.']
+  }
+}
+
 // Convert Duration Function
 function convertDuration (time) {
   time = time * 1000
@@ -130,16 +140,39 @@ bot.on('ready', () => {
       let url = message.content.split(' ')
       if (inVoice === false) {
         let voiceChannel = message.member.voiceChannel
+
         voiceConnect(voiceChannel)
           .then(connection => {
             message.channel.sendMessage('**INFO: ** Grabbing video data...')
             const stream = ytdl(url[1], {filter: 'audioonly'})
             const dispatcher = connection.playStream(stream)
+
             ytdl.getInfo(url[1], (err, info) => {
               message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
               console.log('Connected to channel: ' + connection.channel)
               console.log('Playing YouTube audio: ' + url[1])
               dispatcher
+
+              // Volume Handeler
+              bot.on('message', (message) => {
+                if (message.content.startsWith(pf + 'volume')) {
+                  let volumeMessage = message.content.split(' ')
+                  let volume = volumeMessage[1]
+                  let volumeResult = volumeHandler(volume)
+
+                  if (volumeResult[0] !== false && inVoice === true) {
+                    dispatcher.setVolumeDecibels(volumeResult[0])
+                    console.log('Volume was set to: ' + volume)
+                    message.channel.sendMessage(volumeResult[1])
+                  } else if (inVoice === false) {
+                    message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
+                  } else {
+                    console.log('Invalid Volume Input! Volume was not changed.')
+                    message.channel.sendMessage(volumeResult[1])
+                  }
+                  if (err) console.log(err)
+                }
+              })
               if (err) console.log(err)
             })
             dispatcher.on('end', () => {
@@ -152,13 +185,6 @@ bot.on('ready', () => {
       }
     }
 
-    // Volume Adjustment
-    if (message.content.startsWith(pf + 'volume')) {
-      let volume = message.content.split(' ')
-      data.volume = volume[1]
-      fs.writeFileSync(path.join(__dirname + '/data.json'), JSON.stringify(data))
-    }
-
     // Leave Voice Command
     if (message.content.startsWith(pf + 'leave')) {
       if (inVoice === true) {
@@ -167,6 +193,16 @@ bot.on('ready', () => {
       } else {
         message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
       }
+    }
+
+    // Destroy bot
+    if (message.content.startsWith(pf + 'destroy')) {
+      console.log('Shutting down bot...')
+      message.channel.sendMessage('**INFO: **Shutting down...')
+      setTimeout(() => {
+        bot.destroy()
+        process.exit(0)
+      }, 1000)
     }
   })
 })
