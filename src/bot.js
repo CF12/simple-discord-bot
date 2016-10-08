@@ -8,19 +8,55 @@ const Discord = require('discord.js')
 let data = JSON.parse(fs.readFileSync(path.join(__dirname + '/data.json')))
 let config = JSON.parse(fs.readFileSync(path.join(__dirname + '/config.json')))
 
-// Sets up objects
+// Sets up bot
 let bot = new Discord.Client()
+
+// Variables
+let pf = '$'
+let dispatcher
+let inVoice = false
+let voiceChannel = null
 
 // Random Number Function
 function randomNum (min, max) {
   return Math.floor(Math.random() * (max - min) + min)
 }
 
-// Variables
-let pf = '$'
-var inVoice = false
-var voiceChannel = null
-var voiceCommandFirstInstance = true
+// Rock Paper SCISSORS Function
+function rps (user) {
+  let bot = randomNum(1, 3)
+  user = user.toUpperCase()
+
+  switch (bot) {
+    case 1:
+      bot = 'ROCK'
+      break
+    case 2:
+      bot = 'PAPER'
+      break
+    case 3:
+      bot = 'SCISSORS'
+      break
+  }
+
+  if (user === 'ROCK') {
+    if (bot === 'ROCK') return ['WTF A TIE HOW', user, bot]
+    if (bot === 'PAPER') return ['HAHA I WIN YOU LOSELOSE HAHA', user, bot]
+    if (bot === 'SCISSORS') return ['WHAT HOW DID YOU WIN', user, bot]
+  }
+
+  if (user === 'PAPER') {
+    if (bot === 'PAPER') return ['WTF A TIE HOW', user, bot]
+    if (bot === 'SCISSORS') return ['HAHA I WIN YOU LOSE HAHA', user, bot]
+    if (bot === 'ROCK') return ['WHAT HOW DID YOU WIN', user, bot]
+  }
+
+  if (user === 'SCISSORS') {
+    if (bot === 'SCISSORS') return ['WTF A TIE HOW', user, bot]
+    if (bot === 'ROCK') return ['HAHA I WIN YOU LOSE HAHA', user, bot]
+    if (bot === 'PAPER') return ['WHAT HOW DID YOU WIN', user, bot]
+  }
+}
 
 // Voice Connect Function
 function voiceConnect (channel) {
@@ -71,9 +107,36 @@ function convertDuration (time) {
 // Bot initiates after it's ready
 bot.on('ready', () => {
   console.log('Bot is ready!')
+  bot.user.setStatus('online', config.game_status)
 
   // On message detected event
   bot.on('message', (message) => {
+    // Rock Paper SCISSORS
+    if (message.content.startsWith(pf + 'rps')) {
+      let userChoice = message.content.split(' ')
+      if (userChoice[1].toUpperCase() === 'ROCK' || userChoice[1].toUpperCase() === 'PAPER' || userChoice[1].toUpperCase() === 'SCISSORS') {
+        let results = rps(userChoice[1])
+        message.channel.sendMessage('__**' + results[0] + '**__' + '\n\n**User\'s choice: **' + results[1] + '\n**Bot\'s choice: **' + results[2])
+      } else {
+        message.channel.sendMessage('**ERROR: **Invalid syntax! Be sure to use "rps (rock, paper, or scissors)"')
+      }
+    }
+
+    // "Help" command (WIP)
+    if (message.content.startsWith(pf + 'help')) {
+      message.channel.sendMessage('**You need help' + message.author + '? Okay, I found you some help:**\n\nhttps://en.wikipedia.org/wiki/Therapy\n\nROASTED\n\n(This feature is still in WIP, okay?)')
+    }
+
+    // DM Somebody (WIP)
+    // if (message.content.startsWith(pf + 'dm')) {
+    //   let args = message.content.split(' ')
+    //   let user = args[1].substring(2, args[1].length - 1)
+    //   console.log(user)
+    //   let DMChannel = user
+    //
+    //   DMChannel.sendMessage('Test')
+    // }
+
     // "Michael" string detected
     if (message.content.startsWith(pf + 'michael')) {
       message.channel.sendMessage(data.replies_michael[randomNum(0, data.replies_michael.length)])
@@ -100,7 +163,7 @@ bot.on('ready', () => {
         })
         .catch(console.log)
       } else {
-        message.channel.sendMessage('**ERROR: Already in a voice channel!**')
+        message.channel.sendMessage('**ERROR: **Already in a voice channel!')
       }
     }
 
@@ -112,7 +175,7 @@ bot.on('ready', () => {
         .then(connection => {
           console.log('Connected to channel: ' + connection.channel)
           const dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
-          dispatcher.setVolume(0.3)
+          dispatcher.setVolume(0.5)
           dispatcher
           dispatcher.on('end', () => {
             voiceDisconnect(voiceChannel)
@@ -120,61 +183,44 @@ bot.on('ready', () => {
         })
         .catch(console.log)
       } else {
-        message.channel.sendMessage('**ERROR: Already in a voice channel!**')
+        message.channel.sendMessage('**ERROR: **Already in a voice channel!')
       }
     }
 
     // Play from youtube
     if (message.content.startsWith(pf + 'play')) {
       let url = message.content.split(' ')
-      voiceCommandFirstInstance = false
 
       if (inVoice === false) {
         let voiceChannel = message.member.voiceChannel
 
-        voiceConnect(voiceChannel)
-          .then(connection => {
-            message.channel.sendMessage('**INFO: ** Grabbing video data...')
-            const stream = ytdl(url[1], {filter: 'audioonly'})
-            const dispatcher = connection.playStream(stream)
+        if (url[1].substring(0, 24) === 'https://www.youtube.com/' && url[1].length === 43) {
+          voiceConnect(voiceChannel)
+            .then(connection => {
+              message.channel.sendMessage('**INFO: ** Grabbing video data...')
+              const stream = ytdl(url[1], {filter: 'audioonly'})
+              dispatcher = connection.playStream(stream)
 
-            ytdl.getInfo(url[1], (err, info) => {
-              message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
-              console.log('Connected to channel: ' + connection.channel)
-              console.log('Playing YouTube audio: ' + url[1])
-              dispatcher
-
-              // Volume Handeler
-              bot.on('message', (message) => {
-                if (message.content.startsWith(pf + 'volume')) {
-                  let volumeMessage = message.content.split(' ')
-                  let volume = volumeMessage[1]
-                  let volumeResult = volumeHandler(volume)
-
-                  if (volumeResult[0] !== false && inVoice === true) {
-                    dispatcher.setVolumeDecibels(volumeResult[0])
-                    console.log('Volume was set to: ' + volume)
-                    message.channel.sendMessage(volumeResult[1])
-                  } else if (inVoice === false) {
-                    console.log('Invalid Volume Command: Bot was not in voice channel')
-                    message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
-                  } else {
-                    console.log('Invalid Volume Input! Volume was not changed.')
-                    message.channel.sendMessage(volumeResult[1])
-                  }
-
-                  if (err) console.log(err)
-                }
+              ytdl.getInfo(url[1], (err, info) => {
+                message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
+                console.log('Connected to channel: ' + connection.channel)
+                console.log('Playing YouTube audio: ' + url[1])
+                dispatcher
+                dispatcher.setVolume(0.5)
+                if (err) console.log(err)
               })
-              if (err) console.log(err)
+
+              dispatcher.on('end', () => {
+                voiceDisconnect(voiceChannel)
+              })
             })
-            dispatcher.on('end', () => {
-              voiceDisconnect(voiceChannel)
-            })
-          })
-          .catch(console.log)
+            .catch(console.log)
+        } else {
+          console.log('URL not valid: stream canceled')
+          message.channel.sendMessage('**ERROR: **Invalid URL! Please make sure you use a VALID YouTube URL.')
+        }
       } else {
-        message.channel.sendMessage('**ERROR: Already in a voice channel!**')
+        message.channel.sendMessage('**ERROR: **Already in a voice channel!')
       }
     }
 
@@ -182,16 +228,29 @@ bot.on('ready', () => {
     if (message.content.startsWith(pf + 'leave')) {
       if (inVoice === true) {
         voiceDisconnect(voiceChannel)
-        message.channel.sendMessage('**INFO: Disconnected from voice channel**')
+        message.channel.sendMessage('**INFO: **Disconnected from voice channel')
       } else {
-        message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
+        message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
       }
     }
 
-    // Voice Handler that handles voice before music has been played
-    if (message.content.startsWith(pf + 'volume') && voiceCommandFirstInstance === true) {
-      console.log('Invalid Volume Command: Bot was not in voice channel')
-      message.channel.sendMessage('**ERROR: The bot is not in a voice channel!**')
+    // Volume Handler
+    if (message.content.startsWith(pf + 'volume')) {
+      let volumeMessage = message.content.split(' ')
+      let volume = volumeMessage[1]
+      let volumeResult = volumeHandler(volume)
+
+      if (volumeResult[0] !== false && inVoice === true) {
+        dispatcher.setVolumeDecibels(volumeResult[0])
+        console.log('Volume was set to: ' + volume)
+        message.channel.sendMessage(volumeResult[1])
+      } else if (inVoice === false) {
+        console.log('Invalid Volume Command: Bot was not in voice channel')
+        message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
+      } else {
+        console.log('Invalid Volume Input! Volume was not changed.')
+        message.channel.sendMessage(volumeResult[1])
+      }
     }
 
     // Destroy bot
