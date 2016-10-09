@@ -16,6 +16,8 @@ let pf = '$'
 let dispatcher
 let inVoice = false
 let voiceChannel = null
+let playlist = []
+let storeVolume = null
 
 // Random Number Function
 function randomNum (min, max) {
@@ -69,6 +71,41 @@ function voiceConnect (channel) {
   }
 }
 
+// Play YouTube URL
+function playSong (voiceChannel, message, callback) {
+  voiceConnect(voiceChannel)
+  .then(connection => {
+    let stream = ytdl(playlist[0], {filter: 'audioonly'})
+    dispatcher = connection.playStream(stream)
+    message.channel.sendMessage('**INFO: ** Grabbing video data...')
+
+    ytdl.getInfo(String(playlist[0]), (err, info) => {
+      if (err) console.log(err)
+
+      message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
+      console.log('Connected to channel: ' + connection.channel)
+      console.log('Playing YouTube audio: ' + info.title)
+      dispatcher
+      dispatcher.setVolume(0.5)
+      dispatcher.setVolumeDecibels(storeVolume)
+
+      dispatcher.on('end', () => {
+        playlist.shift()
+        if (playlist.length === 0) {
+          console.log('Queue ended. Disconnecting...')
+          message.channel.sendMessage('**INFO: **Queue ended. Disconnecting...')
+          voiceDisconnect(voiceChannel)
+          inVoice = false
+        }
+        callback()
+      })
+    })
+  })
+  .catch(err => {
+    console.log(err)
+  })
+}
+
 // Voice Disconnect Function
 function voiceDisconnect (channel) {
   try {
@@ -85,6 +122,7 @@ function voiceDisconnect (channel) {
 function volumeHandler (volume) {
   if (volume % 1 === 0 && volume >= 0 && volume <= 20) {
     let output = Math.floor((volume - 20) * 1.2)
+    storeVolume = output
     return [output, '**INFO: **Volume was set to: ' + volume]
   } else {
     return [false, '**ERROR: **Invalid amount! Must be an integer between 0 and 20.']
@@ -132,7 +170,7 @@ bot.on('ready', () => {
     //   let args = message.content.split(' ')
     //   let user = args[1].substring(2, args[1].length - 1)
     //   console.log(user)
-    //   let DMChannel = user
+    //   let DMChannel = user.channel
     //
     //   DMChannel.sendMessage('Test')
     // }
@@ -150,7 +188,7 @@ bot.on('ready', () => {
     // John Cena Voice Command
     if (message.content.startsWith(pf + 'jc')) {
       if (inVoice === false) {
-        let voiceChannel = message.member.voiceChannel
+        voiceChannel = message.member.voiceChannel
         voiceConnect(voiceChannel)
         .then(connection => {
           console.log('Connected to channel: ' + connection.channel)
@@ -170,7 +208,7 @@ bot.on('ready', () => {
     // Rick Roll Command
     if (message.content.startsWith(pf + 'rr')) {
       if (inVoice === false) {
-        let voiceChannel = message.member.voiceChannel
+        voiceChannel = message.member.voiceChannel
         voiceConnect(voiceChannel)
         .then(connection => {
           console.log('Connected to channel: ' + connection.channel)
@@ -187,34 +225,31 @@ bot.on('ready', () => {
       }
     }
 
-    // Play from youtube
+    // Play from YouTube
     if (message.content.startsWith(pf + 'play')) {
-      let url = message.content.split(' ')
+      const commandLength = (pf + 'play').length
+      let url = message.content.split(' ')[1]
 
-      if (inVoice === false) {
-        let voiceChannel = message.member.voiceChannel
+      if (message.content.length === commandLength) {
+        message.channel.sendMessage('**INFO: **Plays a song from a youtube link. Usage: ' + pf + 'play (URL)')
+      } else if (inVoice === true && playlist.length !== 0) {
+        if (url.substring(0, 24) === 'https://www.youtube.com/' && url.length === 43) {
+          playlist.push(url)
+          message.channel.sendMessage('**INFO: **Song added to queue')
+        } else {
+          console.log('URL not valid: Queue canceled')
+          message.channel.sendMessage('**ERROR: **Invalid URL! Please make sure you use a VALID YouTube URL.')
+        }
+      } else if (inVoice === false && playlist.length === 0) {
+        voiceChannel = message.member.voiceChannel
 
-        if (url[1].substring(0, 24) === 'https://www.youtube.com/' && url[1].length === 43) {
-          voiceConnect(voiceChannel)
-            .then(connection => {
-              message.channel.sendMessage('**INFO: ** Grabbing video data...')
-              const stream = ytdl(url[1], {filter: 'audioonly'})
-              dispatcher = connection.playStream(stream)
-
-              ytdl.getInfo(url[1], (err, info) => {
-                message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
-                console.log('Connected to channel: ' + connection.channel)
-                console.log('Playing YouTube audio: ' + url[1])
-                dispatcher
-                dispatcher.setVolume(0.5)
-                if (err) console.log(err)
-              })
-
-              dispatcher.on('end', () => {
-                voiceDisconnect(voiceChannel)
-              })
-            })
-            .catch(console.log)
+        if (url.substring(0, 24) === 'https://www.youtube.com/' && url.length === 43) {
+          playlist.push(url)
+          playSong(voiceChannel, message, () => {
+            if (inVoice === true) {
+              playSong(voiceChannel, message)
+            }
+          })
         } else {
           console.log('URL not valid: stream canceled')
           message.channel.sendMessage('**ERROR: **Invalid URL! Please make sure you use a VALID YouTube URL.')
@@ -222,6 +257,12 @@ bot.on('ready', () => {
       } else {
         message.channel.sendMessage('**ERROR: **Already in a voice channel!')
       }
+    }
+
+    // Debug Command
+    if (message.content.startsWith(pf + 'db')) {
+      message.channel.sendMessage('```IN VOICE: ' + inVoice + '\nPLAYLIST ARRAY: ' + String(playlist) + '```')
+      console.log(playlist)
     }
 
     // Leave Voice Command
