@@ -98,7 +98,7 @@ function playSong (voiceChannel, message, callback) {
           voiceDisconnect(voiceChannel)
           inVoice = false
         }
-        callback()
+        if (callback) callback()
       })
     })
   })
