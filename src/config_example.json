@@ -1,3 +1,5 @@
 {
   "bot_token": "",
+  "yt_api_key": "",
+  "game_status": ""
 }

@@ -2,6 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const ytdl = require('ytdl-core')
+const ypi = require('youtube-playlist-info')
 const Discord = require('discord.js')
 
 // Convert JSONs to JS objects
@@ -71,7 +72,7 @@ function voiceConnect (channel) {
   }
 }
 
-// Play YouTube URL
+// Play Song Function
 function playSong (voiceChannel, message, callback) {
   voiceConnect(voiceChannel)
   .then(connection => {
@@ -86,8 +87,8 @@ function playSong (voiceChannel, message, callback) {
       console.log('Connected to channel: ' + connection.channel)
       console.log('Playing YouTube audio: ' + info.title)
       dispatcher
-      dispatcher.setVolume(0.5)
       dispatcher.setVolumeDecibels(storeVolume)
+      dispatcher.setVolume(0.5)
 
       dispatcher.on('end', () => {
         playlist.shift()
@@ -109,6 +110,7 @@ function playSong (voiceChannel, message, callback) {
 // Voice Disconnect Function
 function voiceDisconnect (channel) {
   try {
+    playlist = []
     voiceChannel = channel
     inVoice = false
     console.log('Disconnected from channel')
@@ -121,7 +123,7 @@ function voiceDisconnect (channel) {
 // Volume Control Handler
 function volumeHandler (volume) {
   if (volume % 1 === 0 && volume >= 0 && volume <= 20) {
-    let output = Math.floor((volume - 20) * 1.2)
+    let output = Math.floor((volume - 20) * 1.3)
     storeVolume = output
     return [output, '**INFO: **Volume was set to: ' + volume]
   } else {
@@ -233,9 +235,19 @@ bot.on('ready', () => {
       if (message.content.length === commandLength) {
         message.channel.sendMessage('**INFO: **Plays a song from a youtube link. Usage: ' + pf + 'play (URL)')
       } else if (inVoice === true && playlist.length !== 0) {
-        if (url.substring(0, 24) === 'https://www.youtube.com/' && url.length === 43) {
+        if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
           playlist.push(url)
           message.channel.sendMessage('**INFO: **Song added to queue')
+        } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
+          console.log('Playlist detected: Parsing...')
+          message.channel.sendMessage('**INFO: **Playlist detected: Parsing...')
+
+          ypi.playlistInfo(config.yt_api_key, String(url.substring(url.indexOf('list=') + 5, url.length)), (pl) => {
+            for (var i = 0; i < pl.length; i++) {
+              let videoID = pl[parseInt(i, 10)].resourceId.videoId
+              playlist.push('https://www.youtube.com/watch?v=' + videoID)
+            }
+          })
         } else {
           console.log('URL not valid: Queue canceled')
           message.channel.sendMessage('**ERROR: **Invalid URL! Please make sure you use a VALID YouTube URL.')
@@ -243,12 +255,28 @@ bot.on('ready', () => {
       } else if (inVoice === false && playlist.length === 0) {
         voiceChannel = message.member.voiceChannel
 
-        if (url.substring(0, 24) === 'https://www.youtube.com/' && url.length === 43) {
+        if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
           playlist.push(url)
           playSong(voiceChannel, message, () => {
             if (inVoice === true) {
               playSong(voiceChannel, message)
             }
+          })
+        } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
+          console.log('Playlist detected: Parsing...')
+          message.channel.sendMessage('**INFO: **Playlist detected: Parsing...')
+
+          ypi.playlistInfo(config.yt_api_key, String(url.substring(url.indexOf('list=') + 5, url.length)), (pl) => {
+            for (var i = 0; i < pl.length; i++) {
+              let videoID = pl[parseInt(i, 10)].resourceId.videoId
+              playlist.push('https://www.youtube.com/watch?v=' + videoID)
+            }
+
+            playSong(voiceChannel, message, () => {
+              if (inVoice === true) {
+                playSong(voiceChannel, message)
+              }
+            })
           })
         } else {
           console.log('URL not valid: stream canceled')

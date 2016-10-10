@@ -1,13 +1,14 @@
 {
   "name": "simple-discord-bot",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A simple discord bot that carries out basic functions.",
   "main": "src/bot.js",
   "dependencies": {
     "discord.js": "^9.3.0",
-    "fs": "^0.0.2",
+    "fs": "0.0.2",
     "path": "^0.12.7",
-    "ytdl": "^0.3.14"
+    "youtube-playlist-info": "^0.1.0",
+    "ytdl-core": "^0.7.18"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
