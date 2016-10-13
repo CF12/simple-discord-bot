@@ -1,6 +1,6 @@
 {
   "name": "simple-discord-bot",
-  "version": "1.2.0",
+  "version": "0.1.0",
   "description": "A simple discord bot that carries out basic functions.",
   "main": "src/bot.js",
   "dependencies": {
