@@ -18,7 +18,7 @@ let dispatcher
 let inVoice = false
 let voiceChannel = null
 let playlist = []
-let storeVolume = null
+let storeVolume = 0
 
 // Random Number Function
 function randomNum (min, max) {
@@ -72,41 +72,6 @@ function voiceConnect (channel) {
   }
 }
 
-// Play Song Function
-function playSong (voiceChannel, message, callback) {
-  voiceConnect(voiceChannel)
-  .then(connection => {
-    let stream = ytdl(playlist[0], {filter: 'audioonly'})
-    dispatcher = connection.playStream(stream)
-    message.channel.sendMessage('**INFO: ** Grabbing video data...')
-
-    ytdl.getInfo(String(playlist[0]), (err, info) => {
-      if (err) console.log(err)
-
-      message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
-      console.log('Connected to channel: ' + connection.channel)
-      console.log('Playing YouTube audio: ' + info.title)
-      dispatcher
-      dispatcher.setVolumeDecibels(storeVolume)
-      dispatcher.setVolume(0.5)
-
-      dispatcher.on('end', () => {
-        playlist.shift()
-        if (playlist.length === 0) {
-          console.log('Queue ended. Disconnecting...')
-          message.channel.sendMessage('**INFO: **Queue ended. Disconnecting...')
-          voiceDisconnect(voiceChannel)
-          inVoice = false
-        }
-        if (callback) callback()
-      })
-    })
-  })
-  .catch(err => {
-    console.log(err)
-  })
-}
-
 // Voice Disconnect Function
 function voiceDisconnect (channel) {
   try {
@@ -123,12 +88,48 @@ function voiceDisconnect (channel) {
 // Volume Control Handler
 function volumeHandler (volume) {
   if (volume % 1 === 0 && volume >= 0 && volume <= 20) {
-    let output = Math.floor((volume - 20) * 1.3)
-    storeVolume = output
+    let output = Math.floor((volume - 20) * 1.4)
     return [output, '**INFO: **Volume was set to: ' + volume]
   } else {
     return [false, '**ERROR: **Invalid amount! Must be an integer between 0 and 20.']
   }
+}
+
+// Play Song Function
+function playSong (voiceChannel, message, callback) {
+  voiceConnect(voiceChannel)
+  .then(connection => {
+    let stream = ytdl(playlist[0], {filter: 'audioonly'})
+    dispatcher = connection.playStream(stream)
+    message.channel.sendMessage('**INFO: ** Grabbing video data...')
+
+    ytdl.getInfo(String(playlist[0]), (err, info) => {
+      if (err) console.log(err)
+
+      message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
+      console.log('Connected to channel: ' + connection.channel)
+      console.log('Playing YouTube audio: ' + info.title)
+      dispatcher
+      dispatcher.setVolume(0.5)
+      dispatcher.setVolumeDecibels(storeVolume)
+
+      dispatcher.on('end', () => {
+        playlist.shift()
+        if (playlist.length === 0) {
+          console.log('Queue ended. Disconnecting...')
+          message.channel.sendMessage('**INFO: **Queue ended. Disconnecting...')
+          voiceDisconnect(voiceChannel)
+          inVoice = false
+          return
+        } else {
+          playSong(voiceChannel, message)
+        }
+      })
+    })
+  })
+  .catch(err => {
+    console.log(err)
+  })
 }
 
 // Convert Duration Function
@@ -257,11 +258,8 @@ bot.on('ready', () => {
 
         if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
           playlist.push(url)
-          playSong(voiceChannel, message, () => {
-            if (inVoice === true) {
-              playSong(voiceChannel, message)
-            }
-          })
+
+          if (inVoice === false) playSong(voiceChannel, message)
         } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
           console.log('Playlist detected: Parsing...')
           message.channel.sendMessage('**INFO: **Playlist detected: Parsing...')
@@ -272,11 +270,7 @@ bot.on('ready', () => {
               playlist.push('https://www.youtube.com/watch?v=' + videoID)
             }
 
-            playSong(voiceChannel, message, () => {
-              if (inVoice === true) {
-                playSong(voiceChannel, message)
-              }
-            })
+            if (inVoice === false) playSong(voiceChannel, message)
           })
         } else {
           console.log('URL not valid: stream canceled')
@@ -287,9 +281,20 @@ bot.on('ready', () => {
       }
     }
 
+    // Song Skipping
+    if (message.content.startsWith(pf + 'skip')) {
+      if (inVoice === true) {
+        console.log('Skipping Song...')
+        message.channel.sendMessage('**INFO: **Skipping song...')
+        dispatcher.end()
+      } else {
+        message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
+      }
+    }
+
     // Debug Command
     if (message.content.startsWith(pf + 'db')) {
-      message.channel.sendMessage('```IN VOICE: ' + inVoice + '\nPLAYLIST ARRAY: ' + String(playlist) + '```')
+      console.log(inVoice)
       console.log(playlist)
     }
 
@@ -310,7 +315,8 @@ bot.on('ready', () => {
       let volumeResult = volumeHandler(volume)
 
       if (volumeResult[0] !== false && inVoice === true) {
-        dispatcher.setVolumeDecibels(volumeResult[0])
+        storeVolume = volumeResult[0]
+        dispatcher.setVolumeDecibels(storeVolume)
         console.log('Volume was set to: ' + volume)
         message.channel.sendMessage(volumeResult[1])
       } else if (inVoice === false) {
