@@ -96,7 +96,7 @@ function volumeHandler (volume) {
 }
 
 // Play Song Function
-function playSong (voiceChannel, message, callback) {
+function playSong (voiceChannel, message) {
   voiceConnect(voiceChannel)
   .then(connection => {
     let stream = ytdl(playlist[0], {filter: 'audioonly'})
@@ -109,7 +109,6 @@ function playSong (voiceChannel, message, callback) {
       message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
       console.log('Connected to channel: ' + connection.channel)
       console.log('Playing YouTube audio: ' + info.title)
-      dispatcher
       dispatcher.setVolume(0.5)
       dispatcher.setVolumeDecibels(storeVolume)
 
@@ -123,6 +122,7 @@ function playSong (voiceChannel, message, callback) {
           return
         } else {
           playSong(voiceChannel, message)
+          return
         }
       })
     })
@@ -167,16 +167,6 @@ bot.on('ready', () => {
     if (message.content.startsWith(pf + 'help')) {
       message.channel.sendMessage('**You need help' + message.author + '? Okay, I found you some help:**\n\nhttps://en.wikipedia.org/wiki/Therapy\n\nROASTED\n\n(This feature is still in WIP, okay?)')
     }
-
-    // DM Somebody (WIP)
-    // if (message.content.startsWith(pf + 'dm')) {
-    //   let args = message.content.split(' ')
-    //   let user = args[1].substring(2, args[1].length - 1)
-    //   console.log(user)
-    //   let DMChannel = user.channel
-    //
-    //   DMChannel.sendMessage('Test')
-    // }
 
     // "Michael" string detected
     if (message.content.startsWith(pf + 'michael')) {
