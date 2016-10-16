@@ -19,6 +19,7 @@ let inVoice = false
 let voiceChannel = null
 let playlist = []
 let storeVolume = 0
+let shuffle = false
 
 // Random Number Function
 function randomNum (min, max) {
@@ -88,43 +89,58 @@ function voiceDisconnect (channel) {
 // Volume Control Handler
 function volumeHandler (volume) {
   if (volume % 1 === 0 && volume >= 0 && volume <= 20) {
-    let output = Math.floor((volume - 20) * 1.4)
+    let output = Math.floor((volume - 20) * 1.3)
     return [output, '**INFO: **Volume was set to: ' + volume]
   } else {
     return [false, '**ERROR: **Invalid amount! Must be an integer between 0 and 20.']
   }
 }
 
+// Add song function
+function addSong (url, callback) {
+  ytdl.getInfo(String(url), (err, info) => {
+    if (err) console.log(err)
+
+    playlist.push([url, info.title, convertDuration(info.length_seconds)])
+    if (callback) callback()
+    return
+  })
+}
+
 // Play Song Function
 function playSong (voiceChannel, message) {
   voiceConnect(voiceChannel)
   .then(connection => {
-    let stream = ytdl(playlist[0], {filter: 'audioonly'})
+    let song
+    let songIndex
+    if (shuffle) {
+      songIndex = randomNum(0, playlist.length)
+      song = playlist[songIndex]
+    } else {
+      song = playlist[0]
+    }
+
+    let stream = ytdl(song[0], {quality: 'lowest', filter: 'audioonly'})
     dispatcher = connection.playStream(stream)
-    message.channel.sendMessage('**INFO: ** Grabbing video data...')
 
-    ytdl.getInfo(String(playlist[0]), (err, info) => {
-      if (err) console.log(err)
+    message.channel.sendMessage('**NOW PLAYING: **' + song[1] + ' [' + song[2] + ']')
+    console.log('Connected to channel: ' + connection.channel)
+    console.log('Playing YouTube audio: ' + song[0])
+    dispatcher.setVolume(0.5)
+    dispatcher.setVolumeDecibels(storeVolume)
 
-      message.channel.sendMessage('**NOW PLAYING: **' + info.title + ' [' + convertDuration(info.length_seconds) + ']')
-      console.log('Connected to channel: ' + connection.channel)
-      console.log('Playing YouTube audio: ' + info.title)
-      dispatcher.setVolume(0.5)
-      dispatcher.setVolumeDecibels(storeVolume)
-
-      dispatcher.on('end', () => {
-        playlist.shift()
-        if (playlist.length === 0) {
-          console.log('Queue ended. Disconnecting...')
-          message.channel.sendMessage('**INFO: **Queue ended. Disconnecting...')
-          voiceDisconnect(voiceChannel)
-          inVoice = false
-          return
-        } else {
-          playSong(voiceChannel, message)
-          return
-        }
-      })
+    dispatcher.on('end', () => {
+      playlist.splice(songIndex, 1)
+      if (playlist.length === 0) {
+        console.log('Queue ended. Disconnecting...')
+        message.channel.sendMessage('**INFO: **Queue ended. Disconnecting...')
+        voiceDisconnect(voiceChannel)
+        inVoice = false
+        return
+      } else {
+        playSong(voiceChannel, message)
+        return
+      }
     })
   })
   .catch(err => {
@@ -187,7 +203,6 @@ bot.on('ready', () => {
           console.log('Connected to channel: ' + connection.channel)
           const dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
           dispatcher.setVolume(0.1)
-          dispatcher
           dispatcher.on('end', () => {
             voiceDisconnect(voiceChannel)
           })
@@ -207,7 +222,6 @@ bot.on('ready', () => {
           console.log('Connected to channel: ' + connection.channel)
           const dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
           dispatcher.setVolume(0.5)
-          dispatcher
           dispatcher.on('end', () => {
             voiceDisconnect(voiceChannel)
           })
@@ -225,31 +239,14 @@ bot.on('ready', () => {
 
       if (message.content.length === commandLength) {
         message.channel.sendMessage('**INFO: **Plays a song from a youtube link. Usage: ' + pf + 'play (URL)')
-      } else if (inVoice === true && playlist.length !== 0) {
-        if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
-          playlist.push(url)
-          message.channel.sendMessage('**INFO: **Song added to queue')
-        } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
-          console.log('Playlist detected: Parsing...')
-          message.channel.sendMessage('**INFO: **Playlist detected: Parsing...')
-
-          ypi.playlistInfo(config.yt_api_key, String(url.substring(url.indexOf('list=') + 5, url.length)), (pl) => {
-            for (var i = 0; i < pl.length; i++) {
-              let videoID = pl[parseInt(i, 10)].resourceId.videoId
-              playlist.push('https://www.youtube.com/watch?v=' + videoID)
-            }
-          })
-        } else {
-          console.log('URL not valid: Queue canceled')
-          message.channel.sendMessage('**ERROR: **Invalid URL! Please make sure you use a VALID YouTube URL.')
-        }
-      } else if (inVoice === false && playlist.length === 0) {
+      } else if (true) {
         voiceChannel = message.member.voiceChannel
 
         if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
-          playlist.push(url)
-
-          if (inVoice === false) playSong(voiceChannel, message)
+          message.channel.sendMessage('**INFO :** Added to queue')
+          addSong(url, () => {
+            if (inVoice === false) playSong(voiceChannel, message)
+          })
         } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
           console.log('Playlist detected: Parsing...')
           message.channel.sendMessage('**INFO: **Playlist detected: Parsing...')
@@ -257,10 +254,10 @@ bot.on('ready', () => {
           ypi.playlistInfo(config.yt_api_key, String(url.substring(url.indexOf('list=') + 5, url.length)), (pl) => {
             for (var i = 0; i < pl.length; i++) {
               let videoID = pl[parseInt(i, 10)].resourceId.videoId
-              playlist.push('https://www.youtube.com/watch?v=' + videoID)
+              addSong('https://www.youtube.com/watch?v=' + videoID, () => {
+                if (inVoice === false) playSong(voiceChannel, message)
+              })
             }
-
-            if (inVoice === false) playSong(voiceChannel, message)
           })
         } else {
           console.log('URL not valid: stream canceled')
@@ -279,6 +276,36 @@ bot.on('ready', () => {
         dispatcher.end()
       } else {
         message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
+      }
+    }
+
+    // Song Shuffling
+    if (message.content.startsWith(pf + 'shuffle')) {
+      let arg = message.content.split(' ')[1]
+      if (arg === undefined) {
+        if (shuffle === false) {
+          shuffle = true
+
+          message.channel.sendMessage('**INFO: **Song shuffling is now ON')
+          console.log('Song shuffling: ON')
+        } else {
+          shuffle = false
+
+          message.channel.sendMessage('**INFO: **Song shuffling is now OFF')
+          console.log('Song shuffling: OFF')
+        }
+      } else if (arg === 'on' || arg === 'true') {
+        shuffle = true
+
+        message.channel.sendMessage('**INFO: **Song shuffling is now ON')
+        console.log('Song shuffling: ON')
+      } else if (arg === 'off' || arg === 'false') {
+        shuffle = false
+
+        message.channel.sendMessage('**INFO: **Song shuffling is now OFF')
+        console.log('Song shuffling: OFF')
+      } else {
+        message.channel.sendMessage('**ERROR: **Invalid usage! Use ' + pf + 'shuffle [on, off].')
       }
     }
 
