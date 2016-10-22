@@ -165,196 +165,201 @@ function convertDuration (time) {
 bot.on('ready', () => {
   console.log('Bot is ready!')
   bot.user.setStatus('online', config.game_status)
+})
 
-  // On message detected event
-  bot.on('message', (message) => {
-    // Rock Paper SCISSORS
-    if (message.content.startsWith(pf + 'rps')) {
-      let userChoice = message.content.split(' ')
-      if (userChoice[1].toUpperCase() === 'ROCK' || userChoice[1].toUpperCase() === 'PAPER' || userChoice[1].toUpperCase() === 'SCISSORS') {
-        let results = rps(userChoice[1])
-        message.channel.sendMessage('__**' + results[0] + '**__' + '\n\n**User\'s choice: **' + results[1] + '\n**Bot\'s choice: **' + results[2])
-      } else {
-        message.channel.sendMessage('**ERROR: **Invalid syntax! Be sure to use "rps (rock, paper, or scissors)"')
-      }
+// On message detected event
+bot.on('message', (message) => {
+  // Ayy lmao
+  if (message.content.toUpperCase() === 'AYY') {
+    message.channel.sendMessage('**lmao (You owe me 5 bucks Albert)**')
+  }
+
+  // Rock Paper SCISSORS
+  if (message.content.startsWith(pf + 'rps')) {
+    let userChoice = message.content.split(' ')
+    if (userChoice[1].toUpperCase() === 'ROCK' || userChoice[1].toUpperCase() === 'PAPER' || userChoice[1].toUpperCase() === 'SCISSORS') {
+      let results = rps(userChoice[1])
+      message.channel.sendMessage('__**' + results[0] + '**__' + '\n\n**User\'s choice: **' + results[1] + '\n**Bot\'s choice: **' + results[2])
+    } else {
+      message.channel.sendMessage('**ERROR: **Invalid syntax! Be sure to use "rps (rock, paper, or scissors)"')
     }
+  }
 
-    // "Help" command (WIP)
-    if (message.content.startsWith(pf + 'help')) {
-      message.channel.sendMessage('**You need help' + message.author + '? Okay, I found you some help:**\n\nhttps://en.wikipedia.org/wiki/Therapy\n\nROASTED\n\n(This feature is still in WIP, okay?)')
-    }
+  // "Help" command (WIP)
+  if (message.content.startsWith(pf + 'help')) {
+    message.channel.sendMessage('**You need help' + message.author + '? Okay, I found you some help:**\n\nhttps://en.wikipedia.org/wiki/Therapy\n\nROASTED\n\n(This feature is still in WIP, okay?)')
+  }
 
-    // "Michael" string detected
-    if (message.content.startsWith(pf + 'michael')) {
-      message.channel.sendMessage(data.replies_michael[randomNum(0, data.replies_michael.length)])
-    }
+  // "Michael" string detected
+  if (message.content.startsWith(pf + 'michael')) {
+    message.channel.sendMessage(data.replies_michael[randomNum(0, data.replies_michael.length)])
+  }
 
-    // Diagnostics and Status
-    if (message.content.startsWith(pf + 'status')) {
-      message.channel.sendMessage('```> BOT STATUS < \n===============\n' + 'Bot created by CF12#1240\n' + 'Bot started: | ' + bot.readyTime + '\n' + 'Bot uptime:  | ' + bot.uptime + ' miliseconds' + '```')
-    }
+  // Diagnostics and Status
+  if (message.content.startsWith(pf + 'status')) {
+    message.channel.sendMessage('```> BOT STATUS < \n===============\n' + 'Bot created by CF12#1240\n' + 'Bot started: | ' + bot.readyTime + '\n' + 'Bot uptime:  | ' + bot.uptime + ' miliseconds' + '```')
+  }
 
-    // John Cena Voice Command
-    if (message.content.startsWith(pf + 'jc')) {
-      if (inVoice === false) {
-        voiceChannel = message.member.voiceChannel
-        voiceConnect(voiceChannel)
-        .then(connection => {
-          console.log('Connected to channel: ' + connection.channel)
-          const dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
-          dispatcher.setVolume(0.1)
-          dispatcher.on('end', () => {
-            voiceDisconnect(voiceChannel)
-          })
+  // John Cena Voice Command
+  if (message.content.startsWith(pf + 'jc')) {
+    if (inVoice === false) {
+      voiceChannel = message.member.voiceChannel
+      voiceConnect(voiceChannel)
+      .then(connection => {
+        console.log('Connected to channel: ' + connection.channel)
+        const dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
+        dispatcher.setVolume(0.1)
+        dispatcher.on('end', () => {
+          voiceDisconnect(voiceChannel)
         })
-        .catch(console.log)
-      } else {
-        message.channel.sendMessage('**ERROR: **Already in a voice channel!')
-      }
+      })
+      .catch(console.log)
+    } else {
+      message.channel.sendMessage('**ERROR: **Already in a voice channel!')
     }
+  }
 
-    // Rick Roll Command
-    if (message.content.startsWith(pf + 'rr')) {
-      if (inVoice === false) {
-        voiceChannel = message.member.voiceChannel
-        voiceConnect(voiceChannel)
-        .then(connection => {
-          console.log('Connected to channel: ' + connection.channel)
-          const dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
-          dispatcher.setVolume(0.5)
-          dispatcher.on('end', () => {
-            voiceDisconnect(voiceChannel)
-          })
+  // Rick Roll Command
+  if (message.content.startsWith(pf + 'rr')) {
+    if (inVoice === false) {
+      voiceChannel = message.member.voiceChannel
+      voiceConnect(voiceChannel)
+      .then(connection => {
+        console.log('Connected to channel: ' + connection.channel)
+        const dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
+        dispatcher.setVolume(0.5)
+        dispatcher.on('end', () => {
+          voiceDisconnect(voiceChannel)
         })
-        .catch(console.log)
-      } else {
-        message.channel.sendMessage('**ERROR: **Already in a voice channel!')
-      }
+      })
+      .catch(console.log)
+    } else {
+      message.channel.sendMessage('**ERROR: **Already in a voice channel!')
     }
+  }
 
-    // Play from YouTube
-    if (message.content.startsWith(pf + 'play')) {
-      const commandLength = (pf + 'play').length
-      let url = message.content.split(' ')[1]
+  // Play from YouTube
+  if (message.content.startsWith(pf + 'play')) {
+    const commandLength = (pf + 'play').length
+    let url = message.content.split(' ')[1]
 
-      if (message.content.length === commandLength) {
-        message.channel.sendMessage('**INFO: **Plays a song from a youtube link. Usage: ' + pf + 'play (URL)')
-      } else if (true) {
-        voiceChannel = message.member.voiceChannel
+    if (message.content.length === commandLength) {
+      message.channel.sendMessage('**INFO: **Plays a song from a youtube link. Usage: ' + pf + 'play (URL)')
+    } else if (true) {
+      voiceChannel = message.member.voiceChannel
 
-        if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
-          message.channel.sendMessage('**INFO :** Added to queue')
-          addSong(url, () => {
-            if (inVoice === false) playSong(voiceChannel, message)
-          })
-        } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
-          console.log('Playlist detected: Parsing...')
-          message.channel.sendMessage('**INFO: **Playlist detected: Parsing...')
+      if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
+        message.channel.sendMessage('**INFO :** Added to queue')
+        addSong(url, () => {
+          if (inVoice === false) playSong(voiceChannel, message)
+        })
+      } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
+        console.log('Playlist detected: Parsing...')
+        message.channel.sendMessage('**INFO: **Playlist detected: Parsing...')
 
-          ypi.playlistInfo(config.yt_api_key, String(url.substring(url.indexOf('list=') + 5, url.length)), (pl) => {
-            for (var i = 0; i < pl.length; i++) {
-              let videoID = pl[parseInt(i, 10)].resourceId.videoId
-              addSong('https://www.youtube.com/watch?v=' + videoID, () => {
-                if (inVoice === false) playSong(voiceChannel, message)
-              })
-            }
-          })
-        } else {
-          console.log('URL not valid: stream canceled')
-          message.channel.sendMessage('**ERROR: **Invalid URL! Please make sure you use a VALID YouTube URL.')
-        }
+        ypi.playlistInfo(config.yt_api_key, String(url.substring(url.indexOf('list=') + 5, url.length)), (pl) => {
+          for (var i = 0; i < pl.length; i++) {
+            let videoID = pl[parseInt(i, 10)].resourceId.videoId
+            addSong('https://www.youtube.com/watch?v=' + videoID, () => {
+              if (inVoice === false) playSong(voiceChannel, message)
+            })
+          }
+        })
       } else {
-        message.channel.sendMessage('**ERROR: **Already in a voice channel!')
+        console.log('URL not valid: stream canceled')
+        message.channel.sendMessage('**ERROR: **Invalid URL! Please make sure you use a VALID YouTube URL.')
       }
+    } else {
+      message.channel.sendMessage('**ERROR: **Already in a voice channel!')
     }
+  }
 
-    // Song Skipping
-    if (message.content.startsWith(pf + 'skip')) {
-      if (inVoice === true) {
-        console.log('Skipping Song...')
-        message.channel.sendMessage('**INFO: **Skipping song...')
-        dispatcher.end()
-      } else {
-        message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
-      }
+  // Song Skipping
+  if (message.content.startsWith(pf + 'skip')) {
+    if (inVoice === true) {
+      console.log('Skipping Song...')
+      message.channel.sendMessage('**INFO: **Skipping song...')
+      dispatcher.end()
+    } else {
+      message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
     }
+  }
 
-    // Song Shuffling
-    if (message.content.startsWith(pf + 'shuffle')) {
-      let arg = message.content.split(' ')[1]
-      if (arg === undefined) {
-        if (shuffle === false) {
-          shuffle = true
-
-          message.channel.sendMessage('**INFO: **Song shuffling is now ON')
-          console.log('Song shuffling: ON')
-        } else {
-          shuffle = false
-
-          message.channel.sendMessage('**INFO: **Song shuffling is now OFF')
-          console.log('Song shuffling: OFF')
-        }
-      } else if (arg === 'on' || arg === 'true') {
+  // Song Shuffling
+  if (message.content.startsWith(pf + 'shuffle')) {
+    let arg = message.content.split(' ')[1]
+    if (arg === undefined) {
+      if (shuffle === false) {
         shuffle = true
 
         message.channel.sendMessage('**INFO: **Song shuffling is now ON')
         console.log('Song shuffling: ON')
-      } else if (arg === 'off' || arg === 'false') {
+      } else {
         shuffle = false
 
         message.channel.sendMessage('**INFO: **Song shuffling is now OFF')
         console.log('Song shuffling: OFF')
-      } else {
-        message.channel.sendMessage('**ERROR: **Invalid usage! Use ' + pf + 'shuffle [on, off].')
       }
-    }
+    } else if (arg === 'on' || arg === 'true') {
+      shuffle = true
 
-    // Debug Command
-    if (message.content.startsWith(pf + 'db')) {
-      console.log(inVoice)
-      console.log(playlist)
-    }
+      message.channel.sendMessage('**INFO: **Song shuffling is now ON')
+      console.log('Song shuffling: ON')
+    } else if (arg === 'off' || arg === 'false') {
+      shuffle = false
 
-    // Leave Voice Command
-    if (message.content.startsWith(pf + 'leave')) {
-      if (inVoice === true) {
-        voiceDisconnect(voiceChannel)
-        message.channel.sendMessage('**INFO: **Disconnected from voice channel')
-      } else {
-        message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
-      }
+      message.channel.sendMessage('**INFO: **Song shuffling is now OFF')
+      console.log('Song shuffling: OFF')
+    } else {
+      message.channel.sendMessage('**ERROR: **Invalid usage! Use ' + pf + 'shuffle [on, off].')
     }
+  }
 
-    // Volume Handler
-    if (message.content.startsWith(pf + 'volume')) {
-      let volumeMessage = message.content.split(' ')
-      let volume = volumeMessage[1]
-      let volumeResult = volumeHandler(volume)
+  // Debug Command
+  if (message.content.startsWith(pf + 'db')) {
+    console.log(inVoice)
+    console.log(playlist)
+  }
 
-      if (volumeResult[0] !== false && inVoice === true) {
-        storeVolume = volumeResult[0]
-        dispatcher.setVolumeDecibels(storeVolume)
-        console.log('Volume was set to: ' + volume)
-        message.channel.sendMessage(volumeResult[1])
-      } else if (inVoice === false) {
-        console.log('Invalid Volume Command: Bot was not in voice channel')
-        message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
-      } else {
-        console.log('Invalid Volume Input! Volume was not changed.')
-        message.channel.sendMessage(volumeResult[1])
-      }
+  // Leave Voice Command
+  if (message.content.startsWith(pf + 'leave')) {
+    if (inVoice === true) {
+      voiceDisconnect(voiceChannel)
+      message.channel.sendMessage('**INFO: **Disconnected from voice channel')
+    } else {
+      message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
     }
+  }
 
-    // Destroy bot
-    if (message.content.startsWith(pf + 'destroy')) {
-      console.log('Shutting down bot...')
-      message.channel.sendMessage('**INFO: **Shutting down...')
-      setTimeout(() => {
-        bot.destroy()
-        process.exit(0)
-      }, 1000)
+  // Volume Handler
+  if (message.content.startsWith(pf + 'volume')) {
+    let volumeMessage = message.content.split(' ')
+    let volume = volumeMessage[1]
+    let volumeResult = volumeHandler(volume)
+
+    if (volumeResult[0] !== false && inVoice === true) {
+      storeVolume = volumeResult[0]
+      dispatcher.setVolumeDecibels(storeVolume)
+      console.log('Volume was set to: ' + volume)
+      message.channel.sendMessage(volumeResult[1])
+    } else if (inVoice === false) {
+      console.log('Invalid Volume Command: Bot was not in voice channel')
+      message.channel.sendMessage('**ERROR: **The bot is not in a voice channel!')
+    } else {
+      console.log('Invalid Volume Input! Volume was not changed.')
+      message.channel.sendMessage(volumeResult[1])
     }
-  })
+  }
+
+  // Destroy bot
+  if (message.content.startsWith(pf + 'destroy')) {
+    console.log('Shutting down bot...')
+    message.channel.sendMessage('**INFO: **Shutting down...')
+    setTimeout(() => {
+      bot.destroy()
+      process.exit(0)
+    }, 1000)
+  }
 })
 
 // Error Handeling
