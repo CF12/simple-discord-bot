@@ -14,12 +14,13 @@ let bot = new Discord.Client()
 
 // Variables
 let pf = '$'
-let dispatcher
+let dispatcher = null
 let inVoice = false
 let voiceChannel = null
 let playlist = []
-let storeVolume = 0
+let storeVolume = -10
 let shuffle = false
+let msg = null
 
 // Random Number Function
 function randomNum (min, max) {
@@ -108,7 +109,7 @@ function addSong (url, callback) {
 }
 
 // Play Song Function
-function playSong (voiceChannel, message) {
+function playSong () {
   voiceConnect(voiceChannel)
   .then(connection => {
     let song
@@ -123,28 +124,33 @@ function playSong (voiceChannel, message) {
     let stream = ytdl(song[0], {quality: 'lowest', filter: 'audioonly'})
     dispatcher = connection.playStream(stream)
 
-    message.channel.sendMessage('**NOW PLAYING: **' + song[1] + ' [' + song[2] + ']')
+    msg.channel.sendMessage('**NOW PLAYING: **' + song[1] + ' [' + song[2] + ']')
     console.log('Connected to channel: ' + connection.channel)
     console.log('Playing YouTube audio: ' + song[0])
     dispatcher.setVolume(0.5)
     dispatcher.setVolumeDecibels(storeVolume)
 
-    dispatcher.on('end', () => {
-      playlist.splice(songIndex, 1)
-      if (playlist.length === 0) {
-        console.log('Queue ended. Disconnecting...')
-        message.channel.sendMessage('**INFO: **Queue ended. Disconnecting...')
-        voiceDisconnect(voiceChannel)
-        inVoice = false
-        return
-      } else {
-        playSong(voiceChannel, message)
-        return
-      }
-    })
+    endDispatcherHandler(songIndex)
   })
   .catch(err => {
     console.log(err)
+  })
+}
+
+// End of Dispatcher handler
+function endDispatcherHandler (songIndex) {
+  dispatcher.on('end', () => {
+    playlist.splice(songIndex, 1)
+    if (playlist.length === 0) {
+      console.log('Queue ended. Disconnecting...')
+      msg.channel.sendMessage('**INFO: **Queue ended. Disconnecting...')
+      voiceDisconnect(voiceChannel)
+      inVoice = false
+      return
+    } else {
+      playSong()
+      return
+    }
   })
 }
 
@@ -169,6 +175,9 @@ bot.on('ready', () => {
 
 // On message detected event
 bot.on('message', (message) => {
+  // Clones local message into global msg
+  msg = message
+
   // Ayy lmao
   if (message.content.toUpperCase() === 'AYY') {
     message.channel.sendMessage('**lmao (You owe me 5 bucks Albert)**')
@@ -201,16 +210,18 @@ bot.on('message', (message) => {
   }
 
   // John Cena Voice Command
-  if (message.content.startsWith(pf + 'jc')) {
+  if (message.content === pf + 'jc') {
     if (inVoice === false) {
       voiceChannel = message.member.voiceChannel
       voiceConnect(voiceChannel)
       .then(connection => {
+        playlist.push(['John Cena', 'JC', '[4:20]'])
         console.log('Connected to channel: ' + connection.channel)
-        const dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
+        dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
         dispatcher.setVolume(0.1)
+        endDispatcherHandler(0)
         dispatcher.on('end', () => {
-          voiceDisconnect(voiceChannel)
+          dispatcher.end()
         })
       })
       .catch(console.log)
@@ -220,16 +231,18 @@ bot.on('message', (message) => {
   }
 
   // Rick Roll Command
-  if (message.content.startsWith(pf + 'rr')) {
+  if (message.content === pf + 'rr') {
     if (inVoice === false) {
       voiceChannel = message.member.voiceChannel
       voiceConnect(voiceChannel)
       .then(connection => {
+        playlist.push(['Rick Roll', 'RR', '[4:20]'])
         console.log('Connected to channel: ' + connection.channel)
-        const dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
+        dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
         dispatcher.setVolume(0.5)
+        endDispatcherHandler(0)
         dispatcher.on('end', () => {
-          voiceDisconnect(voiceChannel)
+          dispatcher.end()
         })
       })
       .catch(console.log)
@@ -251,7 +264,7 @@ bot.on('message', (message) => {
       if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
         message.channel.sendMessage('**INFO :** Added to queue')
         addSong(url, () => {
-          if (inVoice === false) playSong(voiceChannel, message)
+          if (inVoice === false) playSong()
         })
       } else if (url.includes('youtube.com') && url.includes('list=') && url.length === 72) {
         console.log('Playlist detected: Parsing...')
@@ -261,7 +274,7 @@ bot.on('message', (message) => {
           for (var i = 0; i < pl.length; i++) {
             let videoID = pl[parseInt(i, 10)].resourceId.videoId
             addSong('https://www.youtube.com/watch?v=' + videoID, () => {
-              if (inVoice === false) playSong(voiceChannel, message)
+              if (inVoice === false) playSong()
             })
           }
         })
@@ -271,6 +284,20 @@ bot.on('message', (message) => {
       }
     } else {
       message.channel.sendMessage('**ERROR: **Already in a voice channel!')
+    }
+  }
+
+  // List Song Queue
+  if (message.content.startsWith(pf + 'queue')) {
+    if (playlist.length !== 0) {
+      let queue = playlist[0][1] + ' '.repeat(80 - playlist[0][1].length) + '|' + ' ' + playlist[0][2] + '\n'
+      for (let i = 1; i < playlist.length; i++) {
+        queue = queue + playlist[i][1] + ' '.repeat(80 - playlist[i][1].length) + '|' + ' ' + playlist[i][2] + '\n'
+      }
+
+      message.channel.sendMessage('**INFO: **Song Queue:\n```' + queue + '```')
+    } else {
+      message.channel.sendMessage('**INFO: **Song Queue:\n```' + 'THERE ARE NO SONGS YOU AUTIST' + '```')
     }
   }
 
