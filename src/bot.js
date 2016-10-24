@@ -289,6 +289,10 @@ bot.on('message', (message) => {
     if (playlist.length !== 0) {
       let queue = playlist[0][1] + ' '.repeat(60 - playlist[0][1].length) + '|' + ' ' + playlist[0][2] + '\n'
       for (let i = 1; i < playlist.length; i++) {
+        if (queue.length > 1800) {
+          queue = queue + '...and ' + playlist.length - i + 1 + 'more'
+          break
+        }
         queue = queue + playlist[i][1] + ' '.repeat(60 - playlist[i][1].length) + '|' + ' ' + playlist[i][2] + '\n'
       }
 
