@@ -156,15 +156,12 @@ function endDispatcherHandler (songIndex) {
 
 // Convert Duration Function
 function convertDuration (time) {
-  time = time * 1000
-  var minutes = Math.floor(time / 60000)
-  var hours = Math.floor(minutes / 60)
-  var seconds = Math.floor(((time) - (minutes * 60000)) / 1000)
-  minutes -= hours * 60
-  if (minutes < 10 && hours > 0) minutes = ':' + minutes
-  if (seconds < 10) seconds = '0' + seconds
-  if (hours > 0) return hours + ':' + minutes + ':' + seconds
-  else return minutes + ':' + seconds
+  let hours = parseInt(time / 3600, 10) % 24
+  let minutes = parseInt(time / 60, 10) % 60
+  let seconds = time % 60
+  if (hours >= 1) return (hours < 10 ? '0' + hours : hours) + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds)
+  if (minutes >= 1) return (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds)
+  else return '00:' + (seconds < 10 ? '0' + seconds : seconds)
 }
 
 // Bot initiates after it's ready
@@ -290,9 +287,9 @@ bot.on('message', (message) => {
   // List Song Queue
   if (message.content.startsWith(pf + 'queue')) {
     if (playlist.length !== 0) {
-      let queue = playlist[0][1] + ' '.repeat(80 - playlist[0][1].length) + '|' + ' ' + playlist[0][2] + '\n'
+      let queue = playlist[0][1] + ' '.repeat(60 - playlist[0][1].length) + '|' + ' ' + playlist[0][2] + '\n'
       for (let i = 1; i < playlist.length; i++) {
-        queue = queue + playlist[i][1] + ' '.repeat(80 - playlist[i][1].length) + '|' + ' ' + playlist[i][2] + '\n'
+        queue = queue + playlist[i][1] + ' '.repeat(60 - playlist[i][1].length) + '|' + ' ' + playlist[i][2] + '\n'
       }
 
       message.channel.sendMessage('**INFO: **Song Queue:\n```' + queue + '```')
