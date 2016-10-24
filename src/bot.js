@@ -177,7 +177,7 @@ bot.on('message', (message) => {
 
   // Ayy lmao
   if (message.content.toUpperCase() === 'AYY') {
-    message.channel.sendMessage('**lmao (You owe me 5 bucks Albert)**')
+    message.channel.sendMessage('**lmao**')
   }
 
   // Rock Paper SCISSORS
@@ -290,7 +290,7 @@ bot.on('message', (message) => {
       let queue = playlist[0][1] + ' '.repeat(60 - playlist[0][1].length) + '|' + ' ' + playlist[0][2] + '\n'
       for (let i = 1; i < playlist.length; i++) {
         if (queue.length > 1800) {
-          queue = queue + '...and ' + (playlist.length - i + 1) + 'more'
+          queue = queue + '...and ' + (playlist.length - i) + ' more'
           break
         }
         queue = queue + playlist[i][1] + ' '.repeat(60 - playlist[i][1].length) + '|' + ' ' + playlist[i][2] + '\n'
