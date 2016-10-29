@@ -381,12 +381,17 @@ bot.on('message', (message) => {
 
   // Destroy bot
   if (message.content.startsWith(pf + 'destroy')) {
-    console.log('Shutting down bot...')
-    message.channel.sendMessage('**INFO: **Shutting down...')
-    setTimeout(() => {
-      bot.destroy()
-      process.exit(0)
-    }, 1000)
+    if (message.guild.ownerID === message.author.id) {
+      console.log('Shutting down bot...')
+      message.channel.sendMessage('**INFO: **Shutting down...')
+      setTimeout(() => {
+        bot.destroy()
+        process.exit(0)
+      }, 1000)
+    } else {
+      message.channel.sendMessage('**ERROR: **Only the Guild Owner can use this command!')
+      return
+    }
   }
 })
 
