@@ -172,6 +172,9 @@ bot.on('ready', () => {
 
 // On message detected event
 bot.on('message', (message) => {
+  // Message catching for any message not starting with prefix
+  if (message.content.startsWith(pf)) return
+  
   // Clones local message into global msg
   msg = message
 
