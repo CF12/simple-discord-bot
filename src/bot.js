@@ -46,7 +46,7 @@ function rps (user) {
 
   if (user === 'ROCK') {
     if (bot === 'ROCK') return ['WTF A TIE HOW', user, bot]
-    if (bot === 'PAPER') return ['HAHA I WIN YOU LOSELOSE HAHA', user, bot]
+    if (bot === 'PAPER') return ['HAHA I WIN YOU LOSE HAHA', user, bot]
     if (bot === 'SCISSORS') return ['WHAT HOW DID YOU WIN', user, bot]
   }
 
@@ -212,6 +212,11 @@ bot.on('message', (message) => {
 
   // John Cena Voice Command
   if (message.content === pf + 'jc') {
+    if (message.member.voiceChannel === undefined) {
+      message.channel.sendMessage('**ERROR: **User is not in a voice channel!')
+      return
+    }
+
     if (inVoice === false) {
       voiceChannel = message.member.voiceChannel
       voiceConnect(voiceChannel)
@@ -233,6 +238,11 @@ bot.on('message', (message) => {
 
   // Rick Roll Command
   if (message.content === pf + 'rr') {
+    if (message.member.voiceChannel === undefined) {
+      message.channel.sendMessage('**ERROR: **User is not in a voice channel!')
+      return
+    }
+
     if (inVoice === false) {
       voiceChannel = message.member.voiceChannel
       voiceConnect(voiceChannel)
@@ -261,6 +271,11 @@ bot.on('message', (message) => {
       message.channel.sendMessage('**INFO: **Plays a song from a youtube link. Usage: ' + pf + 'play (URL)')
     } else if (true) {
       voiceChannel = message.member.voiceChannel
+
+      if (!voiceChannel && !inVoice) {
+        message.channel.sendMessage('**ERROR: **User is not in a voice channel!')
+        return
+      }
 
       if (url.includes('youtube.com') && url.includes('v=') && url.length === 43) {
         message.channel.sendMessage('**INFO :** Added to queue')
