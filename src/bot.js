@@ -306,13 +306,21 @@ bot.on('message', (message) => {
   // List Song Queue
   if (message.content.startsWith(pf + 'queue')) {
     if (playlist.length !== 0) {
-      let queue = playlist[0][1] + ' '.repeat(60 - playlist[0][1].length) + '|' + ' ' + playlist[0][2] + '\n'
+      let firstVideoTitle = playlist[0][1]
+      if (firstVideoTitle.length >= 60) firstVideoTitle = firstVideoTitle.slice(0, 55) + ' ...'
+      let queue = firstVideoTitle + ' '.repeat(60 - firstVideoTitle.length) + '|' + ' ' + playlist[0][2] + '\n'
+
       for (let i = 1; i < playlist.length; i++) {
+        let videoTitle = playlist[i][1]
+        let videoDuration = playlist[i][2]
+
+        if (videoTitle.length >= 60) videoTitle = videoTitle.slice(0, 55) + ' ...'
         if (queue.length > 1800) {
           queue = queue + '...and ' + (playlist.length - i) + ' more'
           break
         }
-        queue = queue + playlist[i][1] + ' '.repeat(60 - playlist[i][1].length) + '|' + ' ' + playlist[i][2] + '\n'
+
+        queue = queue + videoTitle + ' '.repeat(60 - videoTitle.length) + '|' + ' ' + videoDuration + '\n'
       }
 
       message.channel.sendMessage('**INFO: **Song Queue:\n```' + queue + '```')
