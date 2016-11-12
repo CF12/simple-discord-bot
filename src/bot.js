@@ -207,7 +207,7 @@ bot.on('message', (message) => {
 
   // Diagnostics and Status
   if (message.content.startsWith(pf + 'status')) {
-    message.channel.sendMessage('```> BOT STATUS < \n===============\n' + 'Bot created by CF12#1240\n' + 'Bot started: | ' + bot.readyTime + '\n' + 'Bot uptime:  | ' + convertDuration(bot.uptime * 1000) + ' miliseconds' + '```')
+    message.channel.sendMessage('```> BOT STATUS < \n===============\n' + 'Bot created by CF12#1240\n' + 'Bot status:  | ' + bot.status + '\n' + 'Bot started: | ' + String(bot.readyTimeStamp) + '\n' + 'Bot uptime:  | ' + convertDuration(Math.floor(bot.uptime / 1000)) + '```')
   }
 
   // John Cena Voice Command
