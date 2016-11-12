@@ -6,8 +6,8 @@ const ypi = require('youtube-playlist-info')
 const Discord = require('discord.js')
 
 // Convert JSONs to JS objects
-let data = JSON.parse(fs.readFileSync(path.join(__dirname + '/data.json')))
-let config = JSON.parse(fs.readFileSync(path.join(__dirname + '/config.json')))
+let data = JSON.parse(fs.readFileSync(path.join(__dirname + '/../' + 'data' + '/data.json')))
+let config = JSON.parse(fs.readFileSync(path.join(__dirname + '/../' + 'config' + '/config.json')))
 
 // Sets up bot
 let bot = new Discord.Client()
@@ -167,7 +167,7 @@ function convertDuration (time) {
 // Bot initiates after it's ready
 bot.on('ready', () => {
   console.log('Bot is ready!')
-  bot.user.setStatus('online', config.game_status)
+  bot.user.setGame(config.game_status)
 })
 
 // On message detected event
@@ -207,7 +207,7 @@ bot.on('message', (message) => {
 
   // Diagnostics and Status
   if (message.content.startsWith(pf + 'status')) {
-    message.channel.sendMessage('```> BOT STATUS < \n===============\n' + 'Bot created by CF12#1240\n' + 'Bot started: | ' + bot.readyTime + '\n' + 'Bot uptime:  | ' + bot.uptime + ' miliseconds' + '```')
+    message.channel.sendMessage('```> BOT STATUS < \n===============\n' + 'Bot created by CF12#1240\n' + 'Bot started: | ' + bot.readyTime + '\n' + 'Bot uptime:  | ' + convertDuration(bot.uptime * 1000) + ' miliseconds' + '```')
   }
 
   // John Cena Voice Command
@@ -223,7 +223,7 @@ bot.on('message', (message) => {
       .then(connection => {
         playlist.push(['John Cena', 'JC', '[4:20]'])
         console.log('Connected to channel: ' + connection.channel)
-        dispatcher = connection.playFile(__dirname + '/john_cena.mp3')
+        dispatcher = connection.playFile(__dirname + '/../' + 'data' + '/john_cena.mp3')
         dispatcher.setVolume(0.1)
         endDispatcherHandler(0)
         dispatcher.on('end', () => {
@@ -249,8 +249,33 @@ bot.on('message', (message) => {
       .then(connection => {
         playlist.push(['Rick Roll', 'RR', '[4:20]'])
         console.log('Connected to channel: ' + connection.channel)
-        dispatcher = connection.playFile(__dirname + '/rick_roll.mp3')
+        dispatcher = connection.playFile(__dirname + '/../' + 'data' + '/rick_roll.mp3')
         dispatcher.setVolume(0.5)
+        endDispatcherHandler(0)
+        dispatcher.on('end', () => {
+          dispatcher.end()
+        })
+      })
+      .catch(console.log)
+    } else {
+      message.channel.sendMessage('**ERROR: **Already in a voice channel!')
+    }
+  }
+
+  // Farmers Only Command
+  if (message.content === pf + 'fo') {
+    if (message.member.voiceChannel === undefined) {
+      message.channel.sendMessage('**ERROR: **User is not in a voice channel!')
+      return
+    }
+
+    if (inVoice === false) {
+      voiceChannel = message.member.voiceChannel
+      voiceConnect(voiceChannel)
+      .then(connection => {
+        playlist.push(['Rick Roll', 'RR', '[4:20]'])
+        console.log('Connected to channel: ' + connection.channel)
+        dispatcher = connection.playFile(__dirname + '/../' + 'data' + '/farmers_only.mp3')
         endDispatcherHandler(0)
         dispatcher.on('end', () => {
           dispatcher.end()
