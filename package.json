@@ -10,10 +10,13 @@
     "opusscript": "0.0.1",
     "path": "^0.12.7",
     "youtube-playlist-info": "^0.1.0",
-    "ytdl-core": "^0.7.18"
+    "ytdl-core": "^0.7.18",
+    "snyk": "^1.24.6"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -24,5 +27,6 @@
   "bugs": {
     "url": "https://github.com/CF12/simple-discord-bot/issues"
   },
-  "homepage": "https://github.com/CF12/simple-discord-bot#readme"
+  "homepage": "https://github.com/CF12/simple-discord-bot#readme",
+  "snyk": true
 }
